@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ConsoleHook
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-09-patch1
+// @version      2025-01-10
 // @description  utils of hook javascript function and value changes for js reverse engineering
 // @author       @Esonhugh
 // @match        http://*
@@ -23,7 +23,7 @@
       // don't let page jump to other place
       blockPageJump: false,
       // log prefix
-      prefix: "[EHOOKS] ",
+      prefix: "[EHOOKS] ", // u can filter all this things with this tag
       // init with eventListener added
       checkEventListnerAdded: false,
       // init with cookie change listener
@@ -57,18 +57,20 @@
 
     hooked: {},
 
-    dumpstack() {
+    dumpstack(print = true) {
       var err = new Error();
-      this.log(
-        err.stack
-          .split("\n")
-          .slice(2) // delete Error and dumpstack self
-          .reverse()
-          .concat(`${this.settings.prefix}Stack Dump -> STACK TOP`)
-          .reverse()
-          // add StackDump message at top
-          .join("\n")
-      );
+      ret = err.stack
+        .split("\n")
+        .slice(2) // delete Error and dumpstack self
+        .reverse()
+        .concat(`${this.settings.prefix}Stack Dump -> STACK TOP`)
+        .reverse()
+        // add StackDump message at top
+        .join("\n");
+      if (print) {
+        this.log(ret);
+      }
+      return ret;
     },
 
     dumpHooked() {
@@ -284,9 +286,9 @@
     },
 
     hookValueViaObject: function (name, obj, key) {
-      var obj_desc = Object.getOwnPropertyDescriptor(obj, key)
+      var obj_desc = Object.getOwnPropertyDescriptor(obj, key);
       if (!obj_desc || !obj_desc.configurable || obj[key] === undefined) {
-        return Error("No Priv to set Property or No such keys!")
+        return Error("No Priv to set Property or No such keys!");
       }
       var obj_name = "OBJ_" + name;
       this.hooked[obj_name] = obj[key];
@@ -297,21 +299,21 @@
             `${console.hooks.settings.prefix}Hook Object value get`,
             `${obj_name}.${key}`,
             "value->",
-            console.hooks.hooked[obj_name],
+            console.hooks.hooked[obj_name]
           );
-          console.hooks.debugger(); 
-          return console.hooks.hooked[obj_name] 
+          console.hooks.debugger();
+          return console.hooks.hooked[obj_name];
         },
         set(v) {
-            console.hooks.rawlog(
-              `${console.hooks.settings.prefix}Hook Proxy value get`,
-              `${obj_name}.${key}`,
-              "value->",
-              console.hooks.hooked[obj_name],
-              "newvalue->",
-              v
-            )
-            console.hooks.hooked[obj_name] = v
+          console.hooks.rawlog(
+            `${console.hooks.settings.prefix}Hook Proxy value get`,
+            `${obj_name}.${key}`,
+            "value->",
+            console.hooks.hooked[obj_name],
+            "newvalue->",
+            v
+          );
+          console.hooks.hooked[obj_name] = v;
         },
       });
     },
