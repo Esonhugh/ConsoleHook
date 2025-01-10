@@ -4,6 +4,7 @@
 obj = {
     keyA: "As",
     KeyB: 1231213123,
+    Key: "3",
     func: () => {
         return "123231"
     },
@@ -12,9 +13,11 @@ obj = {
     }
 }
 
+console.hooks.hookValueViaObject("objx", obj, "Key" )
+
 // obj = console.hooks.hookValueViaProxy("objx", obj)
 obj.keyA
-obj.Key = "C"
+obj.Key
 obj.KeyB = "1231"
 
 // console.hooks.hookValueViaGetSet("objx",obj, "Key")
@@ -30,6 +33,7 @@ console.hooks.hookfunc(obj, "func", function (res) {
 })
 console.log(obj.func())
 
+/*
 setInterval(function () {
     console.log("debugger!");
     debugger
@@ -63,3 +67,4 @@ function a() {
     b()
 }
 a()
+*/

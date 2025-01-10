@@ -13,7 +13,7 @@
 // @license     MIT
 // @run-at document-start
 // ==/UserScript==
- 
+
 (function () {
   console.hooks = {
     // settings
@@ -32,43 +32,51 @@
       checkLocalStorageGetSet: false,
       // anti dead loop debugger in script
       antiDeadLoopDebugger: true,
- 
-      // hidden too many logs
+
+      // hidden too many default debug logs if you don't need it
       hiddenlog: false,
     },
- 
+
     rawlog: function (...data) {
       if (this.settings.hiddenlog) {
         return; // don't print
       }
       return console.debug(...data);
     },
- 
+
     log: console.warn,
- 
+
     debugger: function () {
       // traped in debug
       if (this.settings.autoDebug) {
+        // dump the real stack for u
+        this.dumpstack();
         debugger;
       }
     },
- 
+
     hooked: {},
- 
+
     dumpstack() {
-        var err = new Error();
-        this.log(err.stack.split("\n").slice(2) // delete Error and dumpstack self
-        .reverse().concat(`${this.settings.prefix}Stack Dump -> STACK TOP`).reverse()
-        // add StackDump message at top
-        .join("\n"))
+      var err = new Error();
+      this.log(
+        err.stack
+          .split("\n")
+          .slice(2) // delete Error and dumpstack self
+          .reverse()
+          .concat(`${this.settings.prefix}Stack Dump -> STACK TOP`)
+          .reverse()
+          // add StackDump message at top
+          .join("\n")
+      );
     },
- 
+
     dumpHooked() {
       for (var i in this.hooked) {
         this.log(`${i}: `, this.hooked[i]);
       }
     },
- 
+
     hookfunc: function (
       object,
       functionName,
@@ -124,7 +132,7 @@
         "success!"
       );
     },
- 
+
     unhookfunc: function (object, functionName) {
       object[functionName] = console.hooks.hooked[functionName];
       this.rawlog(
@@ -133,7 +141,7 @@
         "success!"
       );
     },
- 
+
     hookCookie: function () {
       try {
         var cookieDesc =
@@ -179,7 +187,7 @@
         this.rawlog(`${console.hooks.settings.prefix}Cookie hook failed!`);
       }
     },
- 
+
     hookLocalStorage: function () {
       this.hookfunc(localStorage, "getItem");
       this.hookfunc(localStorage, "setItem");
@@ -187,7 +195,7 @@
       this.hookfunc(localStorage, "clear");
       this.rawlog(`${console.hooks.settings.prefix}LocalStorage hooked!`);
     },
- 
+
     hookValueViaGetSet: function (name, obj, key) {
       if (obj[key]) {
         this.hooked[key] = obj[key];
@@ -219,16 +227,12 @@
         return org;
       });
     },
- 
+
     hookValueViaProxy: function (name, obj, key = "default_all") {
       var obj_name = "OBJ_" + name;
       return new Proxy(obj, {
         get: function (target, property, receiver) {
-          if (!target[property]) {
-            ret = undefined;
-          } else {
-            ret = target[property];
-          }
+          var ret = target[property];
           if (key === "default_all") {
             console.hooks.rawlog(
               `${console.hooks.settings.prefix}Hook Proxy value get`,
@@ -250,11 +254,7 @@
           return target[property];
         },
         set: function (target, property, newValue, receiver) {
-          if (!target[property]) {
-            ret = undefined;
-          } else {
-            ret = target[property];
-          }
+          var ret = target[property];
           if (key === "default_all") {
             console.hooks.rawlog(
               `${console.hooks.settings.prefix}Hook Proxy value set`,
@@ -282,7 +282,40 @@
         },
       });
     },
- 
+
+    hookValueViaObject: function (name, obj, key) {
+      var obj_desc = Object.getOwnPropertyDescriptor(obj, key)
+      if (!obj_desc || !obj_desc.configurable || obj[key] === undefined) {
+        return Error("No Priv to set Property or No such keys!")
+      }
+      var obj_name = "OBJ_" + name;
+      this.hooked[obj_name] = obj[key];
+      Object.defineProperty(obj, key, {
+        configurable: true,
+        get() {
+          console.hooks.rawlog(
+            `${console.hooks.settings.prefix}Hook Object value get`,
+            `${obj_name}.${key}`,
+            "value->",
+            console.hooks.hooked[obj_name],
+          );
+          console.hooks.debugger(); 
+          return console.hooks.hooked[obj_name] 
+        },
+        set(v) {
+            console.hooks.rawlog(
+              `${console.hooks.settings.prefix}Hook Proxy value get`,
+              `${obj_name}.${key}`,
+              "value->",
+              console.hooks.hooked[obj_name],
+              "newvalue->",
+              v
+            )
+            console.hooks.hooked[obj_name] = v
+        },
+      });
+    },
+
     hookEvents: function (params) {
       var placeToReplace;
       if (window.EventTarget && EventTarget.prototype.addEventListener) {
@@ -302,9 +335,9 @@
         }
       );
     },
- 
+
     antiDebuggerLoops: function () {
-      processDebugger = (type,res) => {
+      processDebugger = (type, res) => {
         let [originalFunction, arguments, t] = res;
         var handler = arguments[0];
         console.hooks.debugger();
@@ -320,20 +353,24 @@
           return arguments;
         }
       };
- 
+
       this.hookfunc(
         window,
         "setInterval",
         () => {},
-        (res)=>{return processDebugger("setInterval", res)}
+        (res) => {
+          return processDebugger("setInterval", res);
+        }
       );
       this.hookfunc(
         window,
         "setTimeout",
         () => {},
-        (res) => {return processDebugger("setTimeout", res)}
+        (res) => {
+          return processDebugger("setTimeout", res);
+        }
       );
-      
+
       this.hookfunc(Function.prototype, "constructor", (res) => {
         let [ret, originalFunction, arguments, env] = res;
         if (ret.toString().includes("debugger")) {
@@ -347,7 +384,7 @@
         return ret;
       });
     },
- 
+
     init: function () {
       if (this.settings.blockPageJump) {
         window.onbeforeunload = function () {
@@ -367,7 +404,7 @@
         this.antiDebuggerLoops();
       }
     },
- 
+
     main: function () {
       this.hookfunc(window, "eval");
       this.hookfunc(window, "Function");
@@ -376,10 +413,10 @@
       this.hookfunc(window, "fetch");
       this.hookfunc(window, "encodeURI");
       this.hookfunc(window, "encodeURIComponent");
- 
+
       this.hookfunc(JSON, "parse");
       this.hookfunc(JSON, "stringify");
- 
+
       this.hookfunc(console, "log");
       // this.hookfunc(console, "warn")
       // this.hookfunc(console, "error")
@@ -390,7 +427,7 @@
       this.hookfunc(console, "clear");
     },
   };
- 
+
   // auto run init
   console.hooks.init();
 })();
