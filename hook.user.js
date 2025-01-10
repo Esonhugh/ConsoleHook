@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ConsoleHook
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-10
+// @version      2025-01-10-patch1
 // @description  utils of hook javascript function and value changes for js reverse engineering
 // @author       @Esonhugh
 // @match        http://*
