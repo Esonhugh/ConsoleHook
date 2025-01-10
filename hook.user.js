@@ -75,7 +75,11 @@
 
     dumpHooked() {
       for (var i in this.hooked) {
-        this.log(`${i}: `, this.hooked[i]);
+        if (this.hooked[i].toString) {
+          this.log(`${i}: ${this.hooked[i].toString()}`)
+        } else {
+          this.log(`${i}: ${this.hooked[i]}`);
+        }
       }
     },
 
@@ -202,7 +206,7 @@
       if (obj[key]) {
         this.hooked[key] = obj[key];
       }
-      var obj_name = `${name}.${key}`;
+      var obj_name = `OBJ_${name}.${key}`;
       var org = obj.__lookupSetter__(key);
       obj.__defineSetter__(key, function (val) {
         org = console.hooks.hooked[key];
@@ -408,6 +412,11 @@
     },
 
     main: function () {
+      if (!this.settings.antiDeadLoopDebugger) {
+        this.hookfunc(window, "setInterval")
+        this.hookfunc(window, "setTimeout")
+        this.hookfunc(Function.prototype, "constructor")
+      }
       this.hookfunc(window, "eval");
       this.hookfunc(window, "Function");
       this.hookfunc(window, "atob");
