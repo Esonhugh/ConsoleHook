@@ -10,12 +10,17 @@ obj = {
     },
     func2: (res) => {
         return res + 1
+    },
+    detectFunc: () => {
+        console.trace("trace")
+        console.trace(this.toString())
+        return console.log(Error("detect").stack)
     }
 }
 
-console.hooks.hookValueViaObject("objx", obj, "Key" )
+// console.hooks.hookValueViaObject("objx", obj, "Key" )
+obj = console.hooks.hookValueViaProxy("objx", obj)
 
-// obj = console.hooks.hookValueViaProxy("objx", obj)
 obj.keyA
 obj.Key
 obj.KeyB = "1231"
@@ -31,7 +36,7 @@ console.hooks.hookfunc(obj, "func", function (res) {
     let [ret, originalFunction, arguments, env] = res;
     return "114514"
 })
-console.log(obj.func())
+console.log(obj.detectFunc())
 
 /*
 setInterval(function () {
