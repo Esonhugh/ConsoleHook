@@ -38,14 +38,13 @@ console.hooks.hookfunc(obj, "func", function (res) {
 })
 console.log(obj.detectFunc())
 
-/*
 setInterval(function () {
-    console.log("debugger!");
-    debugger
+    // console.log("debugger");
+    // debugger
 }, 123);
 
 setInterval(()=> {
-    debugger
+    // debugger
 }, 123)
 
 console.hooks.hookfunc(obj, "func2", ()=>{}, (res)=>{
@@ -59,7 +58,7 @@ obj.func2(12);
 
 function re(){ Function["constructor"]("return () => {debugger}")["call"]("action")}
 
-setInterval(re, 123);
+// setInterval(re, 123);
 
 function a() {
     function b() {
@@ -72,4 +71,3 @@ function a() {
     b()
 }
 a()
-*/

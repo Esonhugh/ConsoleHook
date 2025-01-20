@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ConsoleHook
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-10-patch1
+// @version      2025-01-20
 // @description  utils of hook javascript function and value changes for js reverse engineering
 // @author       @Esonhugh
 // @match        http://*
@@ -59,14 +59,14 @@
 
     dumpstack(print = true) {
       var err = new Error();
-      ret = err.stack
-        .split("\n")
-        .slice(2) // delete Error and dumpstack self
-        .reverse()
-        .concat(`${this.settings.prefix}Stack Dump -> STACK TOP`)
-        .reverse()
-        // add StackDump message at top
-        .join("\n");
+      var stack = err.stack.split("\n")
+      var ret = [`${this.settings.prefix}DUMP STACK: `];
+      for (var i of stack) {
+        if (!i.includes("userscript.html") && i !== "Error") {
+          ret = ret.concat(i)
+        }
+      }
+      ret = ret.join("\n")
       if (print) {
         this.log(ret);
       }
