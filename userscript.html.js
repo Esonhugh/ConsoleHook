@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ConsoleHook
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-20
+// @version      2025-01-22
 // @description  utils of hook javascript function and value changes for js reverse engineering
 // @author       @Esonhugh
 // @match        http://*
@@ -59,14 +59,14 @@
 
     dumpstack(print = true) {
       var err = new Error();
-      var stack = err.stack.split("\n")
+      var stack = err.stack.split("\n");
       var ret = [`${this.settings.prefix}DUMP STACK: `];
       for (var i of stack) {
         if (!i.includes("userscript.html") && i !== "Error") {
-          ret = ret.concat(i)
+          ret = ret.concat(i);
         }
       }
-      ret = ret.join("\n")
+      ret = ret.join("\n");
       if (print) {
         this.log(ret);
       }
@@ -87,7 +87,8 @@
       object,
       functionName,
       posthook = () => {},
-      prehook = () => {}
+      prehook = () => {},
+      slience = false
     ) {
       (function (originalFunction) {
         object[functionName] = function () {
@@ -102,14 +103,16 @@
           }
           // 2. Execute old function
           var returnValue = originalFunction.apply(this, realargs);
-          console.hooks.rawlog(
-            `${console.hooks.settings.prefix}Hook function trap-> func[${functionName}]`,
-            "args->",
-            realargs,
-            "ret->",
-            returnValue
-          );
-          console.hooks.debugger();
+          if (!slience) { // not slience
+            console.hooks.rawlog(
+              `${console.hooks.settings.prefix}Hook function trap-> func[${functionName}]`,
+              "args->",
+              realargs,
+              "ret->",
+              returnValue
+            );
+            console.hooks.debugger();
+          }
           // 3. Post hook change values
           var newReturn = posthook([
             returnValue,
@@ -123,7 +126,7 @@
           return returnValue;
         };
         object[functionName].toString = function () {
-          console.hooks.rawlog(
+          console.hooks.log(
             `${console.hooks.settings.prefix}Found hook toString check!`,
             originalFunction
           );
@@ -132,7 +135,7 @@
         };
         console.hooks.hooked[functionName] = originalFunction;
       })(object[functionName]);
-      this.rawlog(
+      this.log(
         `${console.hooks.settings.prefix}Hook function`,
         functionName,
         "success!"
@@ -370,7 +373,7 @@
         () => {},
         (res) => {
           return processDebugger("setInterval", res);
-        }
+        }, true
       );
       this.hookfunc(
         window,
@@ -378,7 +381,7 @@
         () => {},
         (res) => {
           return processDebugger("setTimeout", res);
-        }
+        }, true
       );
 
       this.hookfunc(Function.prototype, "constructor", (res) => {
@@ -444,7 +447,7 @@
     },
   };
 
-  // Console Hooks utils for 
+  // Console Hooks utils for
   {
     console.hooks.utils = {};
 
