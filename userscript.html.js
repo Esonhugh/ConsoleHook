@@ -37,6 +37,56 @@
       hiddenlog: false,
     },
 
+    init: function () {
+      if (this.utils) {
+        this.utils.init()
+      }
+      if (this.settings.blockPageJump) {
+        window.onbeforeunload = function () {
+          return "ANTI LEAVE";
+        };
+      }
+      if (this.settings.checkEventListnerAdded) {
+        this.hookEvents();
+      }
+      if (this.settings.checkCookieChange) {
+        this.hookCookie();
+      }
+      if (this.settings.checkLocalStorageGetSet) {
+        this.hookLocalStorage();
+      }
+      if (this.settings.antiDeadLoopDebugger) {
+        this.antiDebuggerLoops();
+      }
+    },
+
+    main: function () {
+      if (!this.settings.antiDeadLoopDebugger) {
+        this.antiDebuggerLoops();
+      }
+      this.hookfunc(window, "eval");
+      this.hookfunc(window, "Function");
+      this.hookfunc(window, "atob");
+      this.hookfunc(window, "btoa");
+      this.hookfunc(window, "fetch");
+      this.hookfunc(window, "encodeURI");
+      this.hookfunc(window, "decodeURI");
+      this.hookfunc(window, "encodeURIComponent");
+      this.hookfunc(window, "decodeURIComponent");
+
+      this.hookfunc(JSON, "parse");
+      this.hookfunc(JSON, "stringify");
+
+      this.hookfunc(console, "log");
+      // this.hookfunc(console, "warn")
+      // this.hookfunc(console, "error")
+      // this.hookfunc(console, "info")
+      // this.hookfunc(console, "debug")
+      // this.hookfunc(console, "table")
+      // this.hookfunc(console, "trace")
+      this.hookfunc(console, "clear");
+    },
+
     rawlog: function (...data) {
       if (this.settings.hiddenlog) {
         return; // don't print
@@ -103,7 +153,8 @@
           }
           // 2. Execute old function
           var returnValue = originalFunction.apply(this, realargs);
-          if (!slience) { // not slience
+          if (!slience) {
+            // not slience
             console.hooks.rawlog(
               `${console.hooks.settings.prefix}Hook function trap-> func[${functionName}]`,
               "args->",
@@ -373,77 +424,38 @@
         () => {},
         (res) => {
           return processDebugger("setInterval", res);
-        }, true
+        },
+        true
       );
+
       this.hookfunc(
         window,
         "setTimeout",
         () => {},
         (res) => {
           return processDebugger("setTimeout", res);
-        }, true
+        },
+        true
       );
 
-      this.hookfunc(Function.prototype, "constructor", (res) => {
-        let [ret, originalFunction, arguments, env] = res;
-        if (ret.toString().includes("debugger")) {
-          console.hooks.log(
-            `${console.hooks.settings.prefix}found debug loop in Function constructor`
-          );
-          console.hooks.debugger();
-          let func = ret.toString().replaceAll("debugger", "");
-          return new Function("return " + func)();
-        }
-        return ret;
-      });
-    },
-
-    init: function () {
-      if (this.utils)
-        if (this.settings.blockPageJump) {
-          window.onbeforeunload = function () {
-            return "ANTI LEAVE";
-          };
-        }
-      if (this.settings.checkEventListnerAdded) {
-        this.hookEvents();
-      }
-      if (this.settings.checkCookieChange) {
-        this.hookCookie();
-      }
-      if (this.settings.checkLocalStorageGetSet) {
-        this.hookLocalStorage();
-      }
-      if (this.settings.antiDeadLoopDebugger) {
-        this.antiDebuggerLoops();
-      }
-    },
-
-    main: function () {
-      if (!this.settings.antiDeadLoopDebugger) {
-        this.hookfunc(window, "setInterval");
-        this.hookfunc(window, "setTimeout");
-        this.hookfunc(Function.prototype, "constructor");
-      }
-      this.hookfunc(window, "eval");
-      this.hookfunc(window, "Function");
-      this.hookfunc(window, "atob");
-      this.hookfunc(window, "btoa");
-      this.hookfunc(window, "fetch");
-      this.hookfunc(window, "encodeURI");
-      this.hookfunc(window, "encodeURIComponent");
-
-      this.hookfunc(JSON, "parse");
-      this.hookfunc(JSON, "stringify");
-
-      this.hookfunc(console, "log");
-      // this.hookfunc(console, "warn")
-      // this.hookfunc(console, "error")
-      // this.hookfunc(console, "info")
-      // this.hookfunc(console, "debug")
-      // this.hookfunc(console, "table")
-      // this.hookfunc(console, "trace")
-      this.hookfunc(console, "clear");
+      this.hookfunc(
+        Function.prototype,
+        "constructor",
+        (res) => {
+          let [ret, originalFunction, arguments, env] = res;
+          if (ret.toString().includes("debugger")) {
+            console.hooks.log(
+              `${console.hooks.settings.prefix}found debug loop in Function constructor`
+            );
+            console.hooks.debugger();
+            let func = ret.toString().replaceAll("debugger", "");
+            return new Function("return " + func)();
+          }
+          return ret;
+        },
+        () => {},
+        true
+      );
     },
   };
 
