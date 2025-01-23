@@ -37,6 +37,7 @@
       hiddenlog: false,
     },
 
+    // init function to apply settings
     init: function () {
       if (this.utils) {
         this.utils.init()
@@ -60,6 +61,7 @@
       }
     },
 
+    // hook data change
     main: function () {
       if (!this.settings.antiDeadLoopDebugger) {
         this.antiDebuggerLoops();
@@ -87,6 +89,7 @@
       this.hookfunc(console, "clear");
     },
 
+    // rawlogger for console hooks and it can be disabled by settings.hiddenlog
     rawlog: function (...data) {
       if (this.settings.hiddenlog) {
         return; // don't print
@@ -94,8 +97,10 @@
       return console.debug(...data);
     },
 
+    // log for console hooks, using console.warn for debug
     log: console.warn,
 
+    // pasue if any trap triggered
     debugger: function () {
       // traped in debug
       if (this.settings.autoDebug) {
@@ -105,8 +110,10 @@
       }
     },
 
+    // It will store raw things all your hooked
     hooked: {},
 
+    // dump stack and delete the userscript.html 
     dumpstack(print = true) {
       var err = new Error();
       var stack = err.stack.split("\n");
@@ -123,6 +130,7 @@
       return ret;
     },
 
+    // dump raw data you hooked
     dumpHooked() {
       for (var i in this.hooked) {
         if (this.hooked[i].toString) {
@@ -133,6 +141,29 @@
       }
     },
 
+    // hookfunc will hooks functions when it called
+    // e.g.
+    // 1. basic use
+    //  hookfunc(window,"Function") ==> window.Function("return xxx")
+    // 
+    // 2. if you need get things when it returns 
+    // hookfunc(window, "Function", (res)=>{ 
+    //  let [returnValue,originalFunction,realargs,this,] = res 
+    // })
+    // 
+    // 3. if you need change what when it calls
+    // hookfunc(window, "Function", ()=>{} ,(res)=>{ 
+    //  let [originalFunction,realargs,this,] = res 
+    //  args = realargs
+    //  return args
+    // })
+    // 
+    // 4. if make this hooks sliently
+    // hookfunc(window, "Function", ()=>{} ,(res)=>{ 
+    //  let [originalFunction,realargs,this,] = res 
+    //  args = realargs
+    //  return args
+    // }, true) 
     hookfunc: function (
       object,
       functionName,
@@ -288,6 +319,7 @@
       });
     },
 
+    // return default getsetter obj
     GetSetter(obj_name, key) {
       return {
         get: function (target, property, receiver) {
@@ -342,6 +374,8 @@
       };
     },
 
+    // hooks value using proxy
+    // usage: obj = hookValueViaProxy("name", obj)
     hookValueViaProxy: function (name, obj, key = "default_all") {
       var obj_name = "OBJ_" + name;
       return this.utils.createProxy(obj, this.GetSetter(obj_name, key));
