@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ConsoleHook
 // @namespace    http://tampermonkey.net/
-// @version      2025-01-23
+// @version      2025-02-06
 // @description  utils of hook javascript function and value changes for js reverse engineering
 // @author       @Esonhugh
 // @match        http://*
@@ -67,7 +67,7 @@
 
     // hook data change
     main: function () {
-      
+
       this.hookfunc(window, "eval");
       this.hookfunc(window, "Function");
       this.hookfunc(window, "atob");
