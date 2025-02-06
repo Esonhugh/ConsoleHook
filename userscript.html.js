@@ -32,7 +32,8 @@
       checkLocalStorageGetSet: false,
       // anti dead loop debugger in script
       antiDeadLoopDebugger: true,
-
+      // Run main in init
+      runMain: false,
       // hidden too many default debug logs if you don't need it
       hiddenlog: false,
     },
@@ -40,7 +41,7 @@
     // init function to apply settings
     init: function () {
       if (this.utils) {
-        this.utils.init()
+        this.utils.init();
       }
       if (this.settings.blockPageJump) {
         window.onbeforeunload = function () {
@@ -58,6 +59,9 @@
       }
       if (this.settings.antiDeadLoopDebugger) {
         this.antiDebuggerLoops();
+      }
+      if (this.settings.runMain) {
+        this.main();
       }
     },
 
@@ -113,7 +117,7 @@
     // It will store raw things all your hooked
     hooked: {},
 
-    // dump stack and delete the userscript.html 
+    // dump stack and delete the userscript.html
     dumpstack(print = true) {
       var err = new Error();
       var stack = err.stack.split("\n");
@@ -145,25 +149,25 @@
     // e.g.
     // 1. basic use
     //  hookfunc(window,"Function") ==> window.Function("return xxx")
-    // 
-    // 2. if you need get things when it returns 
-    // hookfunc(window, "Function", (res)=>{ 
-    //  let [returnValue,originalFunction,realargs,this,] = res 
+    //
+    // 2. if you need get things when it returns
+    // hookfunc(window, "Function", (res)=>{
+    //  let [returnValue,originalFunction,realargs,this,] = res
     // })
-    // 
+    //
     // 3. if you need change what when it calls
-    // hookfunc(window, "Function", ()=>{} ,(res)=>{ 
-    //  let [originalFunction,realargs,this,] = res 
+    // hookfunc(window, "Function", ()=>{} ,(res)=>{
+    //  let [originalFunction,realargs,this,] = res
     //  args = realargs
     //  return args
     // })
-    // 
+    //
     // 4. if make this hooks sliently
-    // hookfunc(window, "Function", ()=>{} ,(res)=>{ 
-    //  let [originalFunction,realargs,this,] = res 
+    // hookfunc(window, "Function", ()=>{} ,(res)=>{
+    //  let [originalFunction,realargs,this,] = res
     //  args = realargs
     //  return args
-    // }, true) 
+    // }, true)
     hookfunc: function (
       object,
       functionName,
@@ -444,7 +448,8 @@
             `${console.hooks.settings.prefix}found debug loop in ${type}`
           );
           console.hooks.debugger();
-          let func = handler.toString().replaceAll("debugger", "");
+          let func = handler.toString().replaceAll("debugger;", "");
+          func = func.replaceAll("debugger", "");
           arguments[0] = new Function("return " + func)();
           return arguments;
         } else {
@@ -473,6 +478,16 @@
       );
 
       this.hookfunc(
+        window,
+        "eval",
+        () => {},
+        (res) => {
+          return processDebugger("eval", res);
+        },
+        true
+      );
+
+      this.hookfunc(
         Function.prototype,
         "constructor",
         (res) => {
@@ -482,7 +497,8 @@
               `${console.hooks.settings.prefix}found debug loop in Function constructor`
             );
             console.hooks.debugger();
-            let func = ret.toString().replaceAll("debugger", "");
+            let func = handler.toString().replaceAll("debugger;", "");
+            func = func.replaceAll("debugger", "");
             return new Function("return " + func)();
           }
           return ret;
