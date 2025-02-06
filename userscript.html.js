@@ -67,9 +67,7 @@
 
     // hook data change
     main: function () {
-      if (!this.settings.antiDeadLoopDebugger) {
-        this.antiDebuggerLoops();
-      }
+      
       this.hookfunc(window, "eval");
       this.hookfunc(window, "Function");
       this.hookfunc(window, "atob");
