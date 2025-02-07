@@ -1,17 +1,19 @@
 // ==UserScript==
-// @name         ConsoleHook
-// @namespace    http://tampermonkey.net/
-// @version      2025-02-06
-// @description  utils of hook javascript function and value changes for js reverse engineering
-// @author       @Esonhugh
-// @match        http://*
-// @match        https://*
-// @include        http://*
-// @include        https://*
-// @icon         https://blog.eson.ninja/img/reol.png
-// @grant        none
-// @license     MIT
-// @run-at document-start
+// @name  ConsoleHook
+// @namespace http://tampermonkey.net/
+// @version 2025-02-07
+// @description utils of hook javascript function and value changes for js reverse engineering
+// @author  @Esonhugh
+// @match http://*
+// @match https://*
+// @include http://*
+// @include https://*
+// @exclude http://127.0.0.1:*/*
+// @exclude http://localhost:*/*
+// @icon  https://blog.eson.ninja/img/reol.png
+// @grant none
+// @license MIT
+// @run-at  document-start
 // ==/UserScript==
 
 (function () {
@@ -446,8 +448,7 @@
             `${console.hooks.settings.prefix}found debug loop in ${type}`
           );
           console.hooks.debugger();
-          let func = handler.toString().replaceAll("debugger;", "");
-          func = func.replaceAll("debugger", "");
+          let func = handler.toString().replaceAll("debugger", `console.error(1332)`);
           arguments[0] = new Function("return " + func)();
           return arguments;
         } else {
@@ -495,8 +496,7 @@
               `${console.hooks.settings.prefix}found debug loop in Function constructor`
             );
             console.hooks.debugger();
-            let func = handler.toString().replaceAll("debugger;", "");
-            func = func.replaceAll("debugger", "");
+            let func = handler.toString().replaceAll("debugger", "console.error(1331)");
             return new Function("return " + func)();
           }
           return ret;
