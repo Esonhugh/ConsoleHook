@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name  ConsoleHook
 // @namespace http://tampermonkey.net/
-// @version 2025-02-07-patched1
+// @version 2025-03-07
 // @description utils of hook javascript function and value changes for js reverse engineering
 // @author  @Esonhugh
 // @match http://*
@@ -213,7 +213,7 @@
         };
         object[functionName].toString = function () {
           console.hooks.log(
-            `${console.hooks.settings.prefix}Found hook toString check!`,
+            `${console.hooks.settings.prefix}Found hook ${object}.${functionName}toString check! and origin function is `,
             originalFunction
           );
           console.hooks.debugger();
