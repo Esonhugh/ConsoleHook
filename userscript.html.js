@@ -71,7 +71,7 @@
     main: function () {
 
       this.hookfunc(window, "eval");
-      this.hookfunc(window, "Function");
+      // this.hookfunc(window, "Function");
       this.hookfunc(window, "atob");
       this.hookfunc(window, "btoa");
       this.hookfunc(window, "fetch");
@@ -213,7 +213,7 @@
         };
         object[functionName].toString = function () {
           console.hooks.log(
-            `${console.hooks.settings.prefix}Found hook ${object}.${functionName}toString check! and origin function is `,
+            `${console.hooks.settings.prefix}Found hook ${object}.${functionName}.toString check! and origin function is `,
             originalFunction
           );
           console.hooks.debugger();
