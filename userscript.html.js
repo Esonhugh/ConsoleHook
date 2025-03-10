@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name  ConsoleHook
 // @namespace http://tampermonkey.net/
-// @version 2025-03-07
+// @version 2025-03-10
 // @description utils of hook javascript function and value changes for js reverse engineering
 // @author  @Esonhugh
 // @match http://*
@@ -145,6 +145,87 @@
       }
     },
 
+    // hookfunc will hooks functions when it called
+    // e.g.
+    // 1. basic use
+    //  hookfunc(window,"Function") ==> window.Function("return xxx")
+    //
+    // 2. if you need get things when it returns
+    // hookfunc(window, "Function", (res)=>{
+    //  let [returnValue,originalFunction,realargs,this,] = res
+    // })
+    //
+    // 3. if you need change what when it calls
+    // hookfunc(window, "Function", ()=>{} ,(res)=>{
+    //  let [originalFunction,realargs,this,] = res
+    //  args = realargs
+    //  return args
+    // })
+    //
+    // 4. if make this hooks sliently
+    // hookfunc(window, "Function", ()=>{} ,(res)=>{
+    //  let [originalFunction,realargs,this,] = res
+    //  args = realargs
+    //  return args
+    // }, true)
+    directhookfunc: function (
+      originalFn,
+      posthook = () => {},
+      prehook = () => {},
+      slience = false
+    ) {
+      let hookedfunction = () => {}
+      (function (originalFunction) {
+        hookedfunction = function () {
+          // hook logic
+          // 1. Allow Check
+          var args = prehook([originalFunction, arguments, this]);
+          var realargs = arguments;
+          if (args) {
+            realargs = args;
+          } else {
+            realargs = arguments;
+          }
+          // 2. Execute old function
+          var returnValue = originalFunction.apply(this, realargs);
+          if (!slience) {
+            // not slience
+            console.hooks.rawlog(
+              `${console.hooks.settings.prefix}Hook function trap-> func[${originalFunction.toString()}]`,
+              "args->",
+              realargs,
+              "ret->",
+              returnValue
+            );
+            console.hooks.debugger();
+          }
+          // 3. Post hook change values
+          var newReturn = posthook([
+            returnValue,
+            originalFunction,
+            realargs,
+            this,
+          ]);
+          if (newReturn) {
+            return newReturn;
+          }
+          return returnValue;
+        };
+        hookedfunction.toString = function () {
+          console.hooks.log(
+            `${console.hooks.settings.prefix}Found hook ${originalFunction.toString()}.toString check!`,
+          );
+          console.hooks.debugger();
+          return originalFunction.toString();
+        };
+      })(originalFn);
+      this.log(
+        `${console.hooks.settings.prefix}Hook function`,
+        originalFn,
+        "success!"
+      );
+      return hookedfunction
+    },
     // hookfunc will hooks functions when it called
     // e.g.
     // 1. basic use

@@ -71,3 +71,6 @@ function a() {
     b()
 }
 a()
+
+a = console.hooks.directhookfunc(a)
+a()
